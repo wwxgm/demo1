@@ -34,7 +34,16 @@ jobs:
         continue-on-error: true
 
       - name: Build unsigned iOS app
-        run: flutter build ios --release --no-codesign
+        shell: bash
+        run: |
+          set +e
+          flutter build ios --release --no-codesign 2>&1 | tee build-ios.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            message=$(tail -n 80 build-ios.log | sed 's/%/%25/g; s/\r/%0D/g' | awk '{printf "%s%0A", $0}')
+            echo "::error file=.github/workflows/flutter-ios-build.yml,line=36::${message}"
+            exit "$status"
+          fi
 
       - name: Package Runner.app artifact
         run: |
