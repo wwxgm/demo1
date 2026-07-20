@@ -32,7 +32,7 @@ class VideoFlipService {
     }
 
     final failStackTrace = await session.getFailStackTrace();
-    final logs = await session.getAllLogsAsString();
+    final logs = await session.getAllLogsAsString() ?? '';
     throw VideoFlipException(
       failStackTrace?.isNotEmpty == true
           ? failStackTrace!
@@ -61,3 +61,4 @@ class VideoFlipService {
     return '"${value.replaceAll('"', '\\"')}"';
   }
 }
+

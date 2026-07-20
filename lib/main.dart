@@ -49,7 +49,7 @@ class _VideoFlipPageState extends State<VideoFlipPage> {
     });
 
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.video,
         allowMultiple: false,
         withData: false,
@@ -125,3 +125,4 @@ class _VideoFlipPageState extends State<VideoFlipPage> {
     );
   }
 }
+
