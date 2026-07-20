@@ -1,0 +1,58 @@
+﻿workflows:
+  ios-unsigned-workflow:
+    name: iOS unsigned Flutter build
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    environment:
+      flutter: 3.27.4
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Generate Flutter platform scaffolding
+        script: |
+          flutter create --platforms=ios,android .
+      - name: Set iOS deployment target
+        script: |
+          ruby -0777 -pi -e "gsub(/# platform :ios, '[^']+'/, \"platform :ios, '14.0'\")" ios/Podfile
+          ruby -0777 -pi -e "gsub(/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;/, 'IPHONEOS_DEPLOYMENT_TARGET = 14.0;')" ios/Runner.xcodeproj/project.pbxproj
+          grep -n "platform :ios" ios/Podfile
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Analyze without blocking build
+        ignore_failure: true
+        script: |
+          flutter analyze
+      - name: Build unsigned iOS app
+        script: |
+          flutter build ios --release --no-codesign --verbose
+      - name: Package unsigned IPA
+        script: |
+          mkdir -p build/ios/iphoneos/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/Runner.app
+          cd build/ios/iphoneos
+          zip -r unsigned-autovi.ipa Payload
+    artifacts:
+      - build/ios/iphoneos/unsigned-autovi.ipa
+      - build/ios/iphoneos/Runner.app
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+
+  android-apk-workflow:
+    name: Android APK Flutter build
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      flutter: 3.27.4
+    scripts:
+      - name: Generate Flutter platform scaffolding
+        script: |
+          flutter create --platforms=ios,android .
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Build Android APK
+        script: |
+          flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
