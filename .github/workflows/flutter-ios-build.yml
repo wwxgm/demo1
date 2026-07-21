@@ -18,13 +18,24 @@ jobs:
           cache: true
 
       - name: Generate Flutter platform scaffolding
-        run: flutter create --platforms=ios,android .
+        run: |
+          rm -rf ios android
+          flutter create --platforms=ios,android .
+
+      - name: Apply iOS native video implementation
+        run: |
+          cp ios_custom/Info.plist ios/Runner/Info.plist
+          cp ios_custom/AppDelegate.swift ios/Runner/AppDelegate.swift
 
       - name: Set iOS deployment target
         run: |
-          ruby -0777 -pi -e "gsub(/# platform :ios, '[^']+'/, \"platform :ios, '14.0'\")" ios/Podfile
+          if [ -f ios/Podfile ]; then
+            ruby -0777 -pi -e "gsub(/# platform :ios, '[^']+'/, \"platform :ios, '14.0'\")" ios/Podfile
+            grep -n "platform :ios" ios/Podfile
+          else
+            echo "No ios/Podfile generated because this build has no CocoaPods plugins."
+          fi
           ruby -0777 -pi -e "gsub(/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;/, 'IPHONEOS_DEPLOYMENT_TARGET = 14.0;')" ios/Runner.xcodeproj/project.pbxproj
-          grep -n "platform :ios" ios/Podfile
 
       - name: Install dependencies
         run: flutter pub get
@@ -50,7 +61,7 @@ jobs:
           mkdir -p build/ios/iphoneos/Payload
           cp -R build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/Runner.app
           cd build/ios/iphoneos
-          zip -r unsigned-autovi.ipa Payload
+          COPYFILE_DISABLE=1 zip -r -X unsigned-autovi.ipa Payload
 
       - name: Upload unsigned IPA artifact
         uses: actions/upload-artifact@v4
