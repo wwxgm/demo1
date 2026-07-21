@@ -1,6 +1,4 @@
-﻿import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:gallery_saver_plus/gallery_saver.dart';
+import 'package:flutter/material.dart';
 
 import 'services/video_flip_service.dart';
 
@@ -45,31 +43,12 @@ class _VideoFlipPageState extends State<VideoFlipPage> {
 
     setState(() {
       _isProcessing = true;
-      _status = '正在打开视频选择器...';
+      _status = '请选择一个视频，随后会自动水平翻转并保存到相册...';
     });
 
     try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.video,
-        allowMultiple: false,
-        withData: false,
-      );
-
-      final inputPath = result?.files.single.path;
-      if (inputPath == null || inputPath.isEmpty) {
-        setState(() => _status = '已取消选择。');
-        return;
-      }
-
-      setState(() => _status = '正在水平翻转视频，请保持 App 打开...');
-      final outputPath = await _videoFlipService.flipVideoHorizontally(inputPath);
-
-      setState(() => _status = '翻转完成，正在保存到相册...');
-      final saved = await GallerySaver.saveVideo(outputPath);
-
-      setState(() {
-        _status = saved == true ? '保存成功：请到手机相册查看。' : '保存失败：视频已生成，但没有写入相册。';
-      });
+      final result = await _videoFlipService.pickFlipAndSaveVideo();
+      setState(() => _status = result);
     } catch (error) {
       setState(() => _status = '处理失败：$error');
     } finally {
@@ -125,4 +104,3 @@ class _VideoFlipPageState extends State<VideoFlipPage> {
     );
   }
 }
-

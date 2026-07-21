@@ -1,4 +1,4 @@
-﻿workflows:
+workflows:
   ios-unsigned-workflow:
     name: iOS unsigned Flutter build
     max_build_duration: 120
@@ -11,6 +11,9 @@
       - name: Generate Flutter platform scaffolding
         script: |
           flutter create --platforms=ios,android .
+      - name: Apply iOS native video implementation
+        script: |
+          cp ios_custom/AppDelegate.swift ios/Runner/AppDelegate.swift
       - name: Set iOS deployment target
         script: |
           ruby -0777 -pi -e "gsub(/# platform :ios, '[^']+'/, \"platform :ios, '14.0'\")" ios/Podfile
@@ -31,7 +34,7 @@
           mkdir -p build/ios/iphoneos/Payload
           cp -R build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/Runner.app
           cd build/ios/iphoneos
-          zip -r unsigned-autovi.ipa Payload
+          COPYFILE_DISABLE=1 zip -r -X unsigned-autovi.ipa Payload
     artifacts:
       - build/ios/iphoneos/unsigned-autovi.ipa
       - build/ios/iphoneos/Runner.app
