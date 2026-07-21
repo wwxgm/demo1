@@ -18,9 +18,13 @@ workflows:
           cp ios_custom/AppDelegate.swift ios/Runner/AppDelegate.swift
       - name: Set iOS deployment target
         script: |
-          ruby -0777 -pi -e "gsub(/# platform :ios, '[^']+'/, \"platform :ios, '14.0'\")" ios/Podfile
+          if [ -f ios/Podfile ]; then
+            ruby -0777 -pi -e "gsub(/# platform :ios, '[^']+'/, \"platform :ios, '14.0'\")" ios/Podfile
+            grep -n "platform :ios" ios/Podfile
+          else
+            echo "No ios/Podfile generated because this build has no CocoaPods plugins."
+          fi
           ruby -0777 -pi -e "gsub(/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;/, 'IPHONEOS_DEPLOYMENT_TARGET = 14.0;')" ios/Runner.xcodeproj/project.pbxproj
-          grep -n "platform :ios" ios/Podfile
       - name: Get Flutter packages
         script: |
           flutter pub get
