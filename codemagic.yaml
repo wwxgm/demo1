@@ -10,9 +10,11 @@ workflows:
     scripts:
       - name: Generate Flutter platform scaffolding
         script: |
+          rm -rf ios android
           flutter create --platforms=ios,android .
       - name: Apply iOS native video implementation
         script: |
+          cp ios_custom/Info.plist ios/Runner/Info.plist
           cp ios_custom/AppDelegate.swift ios/Runner/AppDelegate.swift
       - name: Set iOS deployment target
         script: |
@@ -50,6 +52,7 @@ workflows:
     scripts:
       - name: Generate Flutter platform scaffolding
         script: |
+          rm -rf ios android
           flutter create --platforms=ios,android .
       - name: Get Flutter packages
         script: |
