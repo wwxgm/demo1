@@ -7,12 +7,30 @@ import UniformTypeIdentifiers
 @main
 @objc class AppDelegate: FlutterAppDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
   private var pendingResult: FlutterResult?
+  private var didConfigureVideoChannel = false
 
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    let controller = window?.rootViewController as! FlutterViewController
+    GeneratedPluginRegistrant.register(with: self)
+    let didLaunch = super.application(application, didFinishLaunchingWithOptions: launchOptions)
+
+    DispatchQueue.main.async {
+      self.configureVideoChannelIfNeeded()
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      self.configureVideoChannelIfNeeded()
+    }
+
+    return didLaunch
+  }
+
+  private func configureVideoChannelIfNeeded() {
+    guard !didConfigureVideoChannel, let controller = flutterViewController() else {
+      return
+    }
+
     let channel = FlutterMethodChannel(
       name: "autovi/video_flip",
       binaryMessenger: controller.binaryMessenger
@@ -27,8 +45,19 @@ import UniformTypeIdentifiers
       self?.pickVideo(result: result)
     }
 
-    GeneratedPluginRegistrant.register(with: self)
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    didConfigureVideoChannel = true
+  }
+
+  private func flutterViewController() -> FlutterViewController? {
+    if let controller = window?.rootViewController as? FlutterViewController {
+      return controller
+    }
+
+    return UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .flatMap { $0.windows }
+      .first { $0.isKeyWindow }?
+      .rootViewController as? FlutterViewController
   }
 
   private func pickVideo(result: @escaping FlutterResult) {
@@ -50,7 +79,12 @@ import UniformTypeIdentifiers
     picker.delegate = self
 
     DispatchQueue.main.async {
-      self.window?.rootViewController?.present(picker, animated: true)
+      guard let controller = self.flutterViewController() else {
+        self.finishError(code: "NO_CONTROLLER", message: "App 页面还没有准备好，请重试。")
+        return
+      }
+
+      controller.present(picker, animated: true)
     }
   }
 
